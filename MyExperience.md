@@ -1,9 +1,10 @@
 # Linkit-data-engineer 
 
-I Began at Saturday, due a fully last week (was my last sprint week, sorry) and started reading all requirements and understand implementations that need to be done. 
-I draw a small schema with everything that I was planning to do. 
+Hi Everyone, just to share some of my way and thougths doing this task.  
 
-1 I choose to download and spin up a Cloudera QuickStart Cluster in Docker Container in my local machine. 
+I began at Saturday, due a fully last week (was my last sprint week, sorry) and started reading all requirements and understand implementations that need to be done. I drew a small schema with everything that I was planning to do. 
+
+I choose to download and spin up a Cloudera QuickStart Cluster in Docker Container in my local machine. 
 The environment had some issues due a limited memory in my personal computer but due a limited time I decided to keep working in a Docker.
 
 **About the Architecture defined:**
