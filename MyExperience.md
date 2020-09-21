@@ -1,4 +1,4 @@
-#Linkit-data-engineer 
+# Linkit-data-engineer 
 
 I Began at Saturday, due a fully last week (was my last sprint week, sorry) and started reading all requirements and understand implementations that need to be done. 
 I draw a small schema with everything that I was planning to do. 
@@ -6,7 +6,7 @@ I draw a small schema with everything that I was planning to do.
 1 I choose to download and spin up a Cloudera QuickStart Cluster in Docker Container in my local machine. 
 The environment had some issues due a limited memory in my personal computer but due a limited time I decided to keep working in a Docker.
 
-**About the Architecture defined: **
+**About the Architecture defined:**
 
 a) I choose to have 3 files one for each App and 2 aditional files, a Connection trait object and a package Object. SparkConn.scala has a trait object that can be
 extended by other objects and classes in order to avoid a lot of diferent connections and manage resources. 
