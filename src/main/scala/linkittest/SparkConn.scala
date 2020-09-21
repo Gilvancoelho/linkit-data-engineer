@@ -14,15 +14,17 @@ import org.apache.spark.sql.SparkSession
 
 
 /** this Trait have a common Connection
- * It is shared with all class that need to
+ * It will be shared with all classes that need to
  * connect with Spark
+ * This Config set to false is due a test env
+ * with limited computer power
+ *
  */
 trait SparkConn extends Serializable {
 
   val log: Logger = LogManager.getLogger(getClass)
 
   val sparkConfig = new SparkConf()
-
 
   sparkConfig.set("spark.broadcast.compress", "false")
   sparkConfig.set("spark.shuffle.compress", "false")

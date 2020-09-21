@@ -163,8 +163,8 @@ class HbaseTable extends SparkConn {
    * This method receive a Dataframe and receive a Columns List (3)
    * and create a rowkey column to this Dataframe
    */
-  def createDFRowkey(df: DataFrame, firstColumn: String, secColumn: String, thirdColumn:String): DataFrame = {
-    df.withColumn(DEFAULT_ROWKEY, concat(col(firstColumn), lit("|"), col(secColumn),lit("|"),col(thirdColumn)))
+  def createDFRowkey(df: DataFrame, firstColumn: String, secColumn: String, thirdColumn:String,forthColumn:String): DataFrame = {
+    df.withColumn(DEFAULT_ROWKEY, concat(col(firstColumn), lit("|"), col(secColumn),lit("|"),col(thirdColumn),lit("|"),col(forthColumn)))
   }
 
   /** This method defines a Catalog to for the schema mapping
