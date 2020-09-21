@@ -12,11 +12,6 @@ val phoenixVersion = "4.7.0"
 val kafkaVersion = "0.10.1"
 
 
-resolvers ++= Seq(
-  "Hontonworks" at  "https://repo.hortonworks.com/content/repositories/releases/",
-  "Java.net Maven2 Repository" at "http://download.java.net/maven/2/"
-)
-
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion,
   "org.apache.spark" %% "spark-sql" % sparkVersion,
@@ -39,8 +34,3 @@ libraryDependencies ++= Seq(
 
 )
 
-
-assemblyMergeStrategy in assembly := {
-  case PathList("META-INF", xs@_*) => MergeStrategy.discard
-  case _ => MergeStrategy.first
-}

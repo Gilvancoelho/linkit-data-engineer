@@ -1,5 +1,11 @@
 package linkittest
 
+/**
+ * Created by Gilvan Coelho 2020-09-20
+ * Project: linkit data engineer test
+ * This package will do Hbase actions related
+ */
+
 import org.apache.hadoop.hbase.client.{Connection, ConnectionFactory}
 import org.apache.hadoop.hbase.io.compress.Compression.Algorithm
 import org.apache.hadoop.hbase.{HBaseConfiguration, HColumnDescriptor, HTableDescriptor, TableName}
@@ -7,11 +13,6 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.execution.datasources.hbase.HBaseTableCatalog
 import org.apache.spark.sql.functions._
 
-/**
- * Created by Gilvan Coelho 2020-09-20
- * Project: linkit data engineer test
- * This package will do Hbase actions related to Hbase Data Work
- */
 
 object HbaseMain extends App with SparkConn {
 
@@ -20,6 +21,8 @@ object HbaseMain extends App with SparkConn {
 
   // create a table
   hbase.createHbaseTable("dangerous_driver")
+
+  log.info("***************  Start to Create a Dangerous_Drive Table and Load data *****************")
 
  // read csv file to dangerous-drive
   val dangerous_drive = sparkSession.read
@@ -34,7 +37,9 @@ object HbaseMain extends App with SparkConn {
   val df_row_key_dd = hbase.createDFRowkey( dangerous_drive_str, "driverId", "truckID", "eventID","eventTime")
 
   //Writing Dataframe row key into Hbase
-  hbase.writeHaseTable( df_row_key_dd, hbase.dangerous_drive_catalog)
+  hbase.writeHbaseTable( df_row_key_dd, hbase.dangerous_drive_catalog)
+
+  log.info("***************  Start to Read and Load Extra-drive data    *****************************")
 
   // read csv file to extra-driver
   val extra_driver = sparkSession.read
@@ -49,8 +54,9 @@ object HbaseMain extends App with SparkConn {
   val df_row_key_ed = hbase.createDFRowkey( extra_driver_str, "driverId", "truckID", "eventID","eventTime")
 
   // Writing Dataframe row key into Hbase
-  hbase.writeHaseTable( df_row_key_ed, hbase.dangerous_drive_catalog)
+  hbase.writeHbaseTable( df_row_key_ed, hbase.dangerous_drive_catalog)
 
+  log.info("***************  Start to Get and change data based on rowkey    *****************************")
 
   // Getting data from Hbase to change
   val dangerous_drive_df = hbase.loadHbase(hbase.dangerous_drive_catalog)
@@ -63,12 +69,14 @@ object HbaseMain extends App with SparkConn {
     .equalTo("Santa Clara to San Diego".toLowerCase), lit("Los Angeles to Santa Clara")))
   writeDfHabase(update_route, hbase.dangerous_drive_catalog)
 
-
 }
 
 class HbaseTable extends SparkConn {
-
-
+  /** This method creae a Hbase table
+   *
+   *  This receive a table namne and check if exists
+   *  if not table will be created
+   */
   def createHbaseTable(tableName: String) = {
     val conn = getConnected()
     val admin = conn.getAdmin
@@ -99,7 +107,10 @@ class HbaseTable extends SparkConn {
     }
 
   }
-
+  /** This method connect to hbase
+   * Its receive a HBASE-HOST-PORT information to
+   * connect
+   */
   def getConnected(): Connection = {
     val config = HBaseConfiguration.create()
     config.set("hbase.master", HBASE_HOST_PORT)
@@ -107,43 +118,58 @@ class HbaseTable extends SparkConn {
     ConnectionFactory.createConnection(config)
   }
 
-
-  def writeHaseTable(df: DataFrame, catalog: String) = {
+  /** Write data to Hbase Table
+   *
+   *  This method receive a Dataframe and a Catalog and
+   *  write this innformation to Hbase
+   */
+  def writeHbaseTable(df: DataFrame, catalog: String) = {
     //put.add(rk, column, value)
 
-    if (hasColumn(df, DEFAULTROWKEYCOLUMN)) {
+    if (hasColumn(df, DEFAULT_ROWKEY)) {
       log.info("*** WRITING INTO HBASE ***")
       df.write
         .options(Map(HBaseTableCatalog.tableCatalog -> catalog, HBaseTableCatalog.newTable -> "5"))
         .format("org.apache.spark.sql.execution.datasources.hbase")
         .save()
     } else {
-      log.info("****************************")
-      log.warn("[ERROR]: table without rowkey ")
-      log.info("****************************")
+
       //throw an exception
     }
 
   }
 
-
+  /** Load data to hbase
+   *
+   *  loadHbase receive a Catalog information and
+   *  Load data into Hbase
+   *  https://blog.cloudera.com/spark-hbase-dataframe-based-hbase-connector/
+   */
   def loadHbase(catalog: String): DataFrame = {
     sparkSession.read.options(Map(HBaseTableCatalog.tableCatalog -> catalog, HBaseTableCatalog.newTable -> "5"))
       .format("org.apache.spark.sql.execution.datasources.hbase")
       .load()
   }
 
-
-
+  /** Cast Colunms to String
+   * This method receive a Dataframe and a Column name and
+   * transform this column to String
+   */
   def castColString(dataFrame: DataFrame,columnName:String)={
     dataFrame.withColumn(columnName, dataFrame(columnName).cast("String") )
   }
 
+  /** Create a Rowkey Column to a Dataframe
+   * This method receive a Dataframe and receive a Columns List (3)
+   * and create a rowkey column to this Dataframe
+   */
   def createDFRowkey(df: DataFrame, firstColumn: String, secColumn: String, thirdColumn:String): DataFrame = {
     df.withColumn(DEFAULT_ROWKEY, concat(col(firstColumn), lit("|"), col(secColumn),lit("|"),col(thirdColumn)))
   }
 
-
+  /** This method defines a Catalog to for the schema mapping
+   * Based on this catalog information will be feed in a rowkey and cf.
+   */
   def dangerous_drive_catalog = s"""{
                                   |"table":{"namespace":"default", "name":"dangerous_driver"},
                                   |"rowkey":"key",

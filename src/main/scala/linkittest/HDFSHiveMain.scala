@@ -1,10 +1,5 @@
 package linkittest
 
-import java.io.File
-import org.apache.spark.sql.{DataFrame, SaveMode}
-import org.apache.spark.sql.functions.sum
-
-
 /**
  * Created by Gilvan Coelho 2020-09-20
  * Project: linkittest data engineer
@@ -14,6 +9,14 @@ import org.apache.spark.sql.functions.sum
  * create hbase tables -> populate hbase tables -> Stream Data from Kafka
  */
 
+import java.io.File
+
+import linkittest.HbaseMain.log
+import org.apache.spark.sql.{DataFrame, SaveMode}
+import org.apache.spark.sql.functions.sum
+
+
+
 object HDFSHiveMain extends App with SparkConn {
 
 
@@ -21,17 +24,24 @@ object HDFSHiveMain extends App with SparkConn {
 
   val hive = new HiveTable()
 
+  log.info("***************  Start to Moving Data    *****************************")
+
+
   movedata.UploadHiveDir(SOURCE_PATH, HDFS_PATH)
 
   val files = movedata.getCSVFiles(new File(SOURCE_PATH))
 
   val df_files = movedata.getDataFramesMap(files)
 
+  log.info("***************  Start to Creae hive table    *****************************")
+
+
   df_files.foreach(dfmap => {
     //create hive table with
     hive.createHiveTableForCSVList(dfmap._2, DBNAME, dfmap._1, HDFS_PATH, true)
   })
 
+  log.info("***************  Start doing agregatee Query  *****************************")
 
   val result_agregation = hive.getAgregatedData(DBNAME)
 
@@ -43,24 +53,17 @@ object HDFSHiveMain extends App with SparkConn {
 class MoveData extends SparkConn {
   //val log = Logger.getLogger(FileName.getClass)
   val hadoopConf = new Configuration()
-  val hdfs =  FileSystem.get(new java.net.URI("hdfs://sandbox-hdp.hortonworks.com:8020"), hadoopConf)
+  val hdfs =  FileSystem.get(new java.net.URI(DEFAULT_URI), hadoopConf)
+
 
   /**
-   * This method copy files from a directory to a destination into HDFS.
-   * * The destination folder have the same name of the database and file
-   * * example: mywarehouse/mydatabase/filename/filename.csv
+   *This method receive a path source and path destination
+   * and move files from one to another
    *
-   * @param srcPath - source path
-   * @param destPath - destination path
    */
-
-
   def UploadHiveDir(srcPath:String, destPath:String): Unit = {
 
-    log.info("*** Getting a list of files")
     val filesList = getListOfCSVFiles(new File(srcPath))
-
-    log.info("*** Put files into HDFS")
 
     filesList.foreach( file => {
       val hdfsPath =  new Path ( destPath+"/" + removeFileExtensions(file.getName))
@@ -74,18 +77,20 @@ class MoveData extends SparkConn {
 
 
   /**
-   *This method receive a java.io.File as parameter and return a Map [String, DataFrame]
+   *This method receive a java.io.File as parameter and return a
+   * Map [String, DataFrame]
    * containing a Dataframe for each file into a path
-   *example: Map (filename -> filenameDF)
    *
-   * @param files
-   * @return
    */
   def getDataFramesMap(files: List[File]): Map[String, DataFrame] = {
     files.map(file =>
       (removeFileExtensions(file.getName),loadCsvAsDataFrame(file.getAbsolutePath))).toMap
   }
 
+  /**
+   *This method receive a Path and return
+   * a dataframe read by Spark
+   */
   def loadCsvAsDataFrame(path:String) ={
     sparkSession.read
       .option("inferSchema", "true")
@@ -120,23 +125,11 @@ class MoveData extends SparkConn {
 
 class HiveTable extends SparkConn {
 
-  /**
-   * Created by Gilvan Coelho 2020-09-20
-   * Project: linkit data engineer test
-   * This package will Create a Hive Table in order to keep
-   */
 
   /**
    * This method create a table for csv file that have been moved to HDFS.
    * The hive table have
-   * example: folder/dangerous_drivers.csv =>
-   *
-   * @param df - dataframe loaded from a csv file
-   * @param dbname - name of database
-   * @param tablename - table name
-   * @param destPath - warehouse database folder
-   *
-   * @param hiveExternalTable - option to create Hive managed table
+
    */
   def createHiveTableForCSVList(df:DataFrame, dbname:String, tablename:String, destPath: String, formathive:String hiveExternalTable:Boolean): Unit ={
 
@@ -165,18 +158,20 @@ class HiveTable extends SparkConn {
   }
 
   /**
-   * This method removes dash sign(-) from column name that is not supported by Hive
+   * This methods receive a dataframe
+   * and returns other dataframe with a
+   * columns anme adjusted replace hyphen to undescore
    *
-   * @param df
-   * @return
    */
-
   def removeHyphen(df: DataFrame): DataFrame = {
     val columnName = df.columns.toSeq.map(columnName => columnName.replace("-","_"))
     df.toDF(columnName:_*)
   }
 
-
+  /** This Method receive a Dataframe
+   *  and generate as result a formated String
+   *  with field name and datatypes.
+   */
   def createFieldString(df: DataFrame):String ={
     var fieldsStr = ""
     df.schema.fields.foreach(f => {
@@ -188,10 +183,17 @@ class HiveTable extends SparkConn {
     fieldsStr.patch(fieldsStr.lastIndexOf(','), "", 1).replace("integer","int")
   }
 
+  /** This Method send a Query to Hive Database
+   *  and receive a Dataframe as result
+   *  receive a database and tablename as parameter
+   */
   def getTable(dbName:String, tableName:String): DataFrame ={
     sql(s"select * from $dbName.$tableName")
   }
-
+  /** This Method send a Query to Hive Database
+   *  and receive a Dataframe as result
+   *  Agregated as required
+   */
   def getAgregatedData(dbName:String): Dataframe ={
     sql(s"select d.driveid, d.name, sum(hourslogged) as HOURS_LOGGED, sum(mileslogged) as MILES_LOGGED  from $dbName.drivers d left join $dbName.timesheet t on d.driverid = t.driverid " )
 

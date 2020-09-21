@@ -1,6 +1,5 @@
 package object linkittest {
 
-
   /**
    * Created by Gilvan Coelho 2020-09-20
    * Project: linkittest data engineer test
@@ -10,19 +9,21 @@ package object linkittest {
    */
 
 
+
+  /** Here there are HDFS Variables */
+
   val WAREHOUSE = "hdfs://quickstart.cloudera:8020/apps/hive/warehouse"
-
-  /** Here there are Hbase Variables */
-
+  val DEFAULT_URI = "hdfs://quickstart.cloudera:8020"
   val DB_NAME = "linkittestdb"
   val TABLE_NAME_DD = "dangerous_driver"
   val TABLE_NAME_ED = "extra_driver"
   val SOURCE_FILE_DD= "files/data-hbase/dangerous_driver/dangerous-driver.csv"
   val SOURCE_FILE_ED= "files/data-hbase/extra-driver/extra-driver.csv"
-  val DRIVER_ID = "80"
-  val EVENT_ID = "4"
-  val EVENT_TIME = " XXXXX"
+  val DRIVER_ID = "78"
+  val EVENT_ID = "1"
+  val EVENT_TIME = "2016-09-23 03:25:03.567"
 
+  /** Here there are Hbase Variables */
 
   val CF_NAME = "cf1"
   val DEFAULT_ROWKEY = "rowkeyid"
@@ -43,6 +44,5 @@ package object linkittest {
   val KAFKA_TOPIC = "linkittest_topic_driver"
   val PATH_DEST = "linkittestdata-hbase/dangerous-driver"
   val WAREHOUSE_PATH = "/linkittest/data-spark/"
-
 
 }

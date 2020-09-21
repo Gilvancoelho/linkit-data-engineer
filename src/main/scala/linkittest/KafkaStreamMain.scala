@@ -6,7 +6,11 @@ import org.apache.spark.sql.types.StructType
 
 object KafkaStreamMain extends App with SparkConn {
 
-  //Reading files from kafka topic
+
+  /** This Method Read Data from a Kafka topic
+  * based on parameters KAFKA_SERVER_PORT
+   * AND  KAFKA_TOPIC_NAME
+  */
   val read = sparkSession.readStream
     .format("kafka")
     .option("kafka.bootstrap.servers", KAFKA_SERVER_PORT)
@@ -14,7 +18,10 @@ object KafkaStreamMain extends App with SparkConn {
     .load()
     .selectExpr("CAST(value AS STRING)")
 
-
+  /** This Method GET data and
+   * write then in a HDFS path
+   *
+   */
   val write = read.writeStream
     .format("json")
     .outputMode("append")
